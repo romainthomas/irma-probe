@@ -14,6 +14,7 @@
 # terms contained in the LICENSE file.
 
 import os
+import sys
 
 from .windefend import WinDefender
 from ..interface import AntivirusPluginInterface
@@ -41,6 +42,17 @@ class WinDefenderPlugin(PluginBase, WinDefender, AntivirusPluginInterface):
 
     @classmethod
     def verify(cls):
+        """
+        MpCmdRun.exe with -ScanType 3 argument only supported
+        on Win8.1 and later
+        Win7sp1 (major=6, minor=1)
+        Win8.1  (major=6, minor=2)
+        """
+        (major, minor, _, _, _) = sys.getwindowsversion()
+        if major < 6 or (major >= 6 and minor < 2):
+            raise PluginLoadError("{0}: verify() failed because "
+                                  "This Windows version is not yet supported"
+                                  "".format(cls.__name__))
         # create an instance
         module = WinDefender()
         path = module.scan_path
