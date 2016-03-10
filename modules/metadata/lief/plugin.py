@@ -48,7 +48,7 @@ class LiefAnalyzerPlugin(PluginBase):
             help='See requirements.txt for needed dependencies'
         ),
     ]
-    _mimetype_regexp = None
+    _mimetype_regexp = "ELF"
 
     # =============
     #  constructor
@@ -57,9 +57,6 @@ class LiefAnalyzerPlugin(PluginBase):
     def __init__(self):
         module = sys.modules['modules.metadata.lief.analyzer'].LiefAnalyzer
         self.module = module()
-
-    def can_handle(self, mimetype):
-        return re.search('ELF', mimetype, re.IGNORECASE) is not None
 
 
     # ==================
@@ -78,7 +75,7 @@ class LiefAnalyzerPlugin(PluginBase):
         else:
             raise RuntimeError("file does not exist")
         result = None
-        if mimetype and re.match('ELF', mimetype):
+        if mimetype and re.match(_mimetype_regexp, mimetype):
             result = self.module.analyze(filename)
         else:
             logging.warning("{0} not yet handled".format(mimetype))
