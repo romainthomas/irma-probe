@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,7 @@ class PEiDPlugin(PluginBase):
     # =================
 
     _plugin_name_ = "PEiD"
+    _plugin_display_name_ = "PEiD PE Packer Identifier"
     _plugin_author_ = "Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.metadata
@@ -82,9 +83,6 @@ class PEiDPlugin(PluginBase):
         peutils = sys.modules['peutils']
         self.signatures = peutils.SignatureDatabase(sign_path)
 
-    def can_handle(self, mimetype):
-        return re.search('PE32', mimetype, re.IGNORECASE) is not None
-
     def analyze(self, filename):
         pefile = sys.modules['pefile']
         try:
@@ -102,7 +100,7 @@ class PEiDPlugin(PluginBase):
     # ==================
 
     def run(self, paths):
-        results = PluginResult(name=type(self).plugin_name,
+        results = PluginResult(name=type(self).plugin_display_name,
                                type=type(self).plugin_category,
                                version=None)
         try:

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,10 +61,6 @@ class Antivirus(object):
         self._scan_patterns = []
         self._scan_results = dict()
         self._is_windows = sys.platform.startswith('win')
-
-    def can_handle(self, mimetype):
-        # Accept all mimetypes
-        return True
 
     # ====================
     #  Antivirus methods

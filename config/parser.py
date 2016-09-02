@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +14,8 @@
 # terms contained in the LICENSE file.
 
 import os
+import logging
+import ssl
 
 from kombu import Queue
 from logging import BASIC_FORMAT, Formatter
@@ -21,6 +23,8 @@ from logging.handlers import SysLogHandler
 from celery.log import redirect_stdouts_to_logger
 from celery.signals import after_setup_task_logger, after_setup_logger
 from lib.irma.configuration.ini import TemplatedConfiguration
+from lib.irma.ftp.sftp import IrmaSFTP
+from lib.irma.ftp.ftps import IrmaFTPS
 
 
 # ==========
@@ -31,6 +35,7 @@ template_probe_config = {
     'log': [
         ('syslog', TemplatedConfiguration.integer, 0),
         ('prefix', TemplatedConfiguration.string, "irma-probe :"),
+        ('debug', TemplatedConfiguration.boolean, False),
     ],
     'broker_probe': [
         ('host', TemplatedConfiguration.string, None),
@@ -47,16 +52,25 @@ template_probe_config = {
         ('password', TemplatedConfiguration.string, None),
         ('queue', TemplatedConfiguration.string, None)
     ],
+    'ftp': [
+        ('protocol', TemplatedConfiguration.string, "sftp"),
+    ],
     'ftp_brain': [
         ('host', TemplatedConfiguration.string, None),
-        ('port', TemplatedConfiguration.integer, 21),
+        ('port', TemplatedConfiguration.integer, 22),
         ('username', TemplatedConfiguration.string, None),
         ('password', TemplatedConfiguration.string, None),
+    ],
+    'ssl_config': [
+        ('activate_ssl', TemplatedConfiguration.boolean, False),
+        ('ca_certs', TemplatedConfiguration.string, None),
+        ('keyfile', TemplatedConfiguration.string, None),
+        ('certfile', TemplatedConfiguration.string, None),
     ],
 }
 
 cwd = os.path.abspath(os.path.dirname(__file__))
-cfg_file = "{0}/{1}".format(cwd, "probe.ini")
+cfg_file = os.path.join(cwd, "probe.ini")
 probe_config = TemplatedConfiguration(cfg_file, template_probe_config)
 
 
@@ -79,6 +93,27 @@ def _conf_celery(app, broker, backend=None, queue=None):
                         # (don't survive to a server restart)
                         CELERY_QUEUES=(Queue(queue, routing_key=queue),)
                         )
+    if probe_config.ssl_config.activate_ssl:
+        ca_certs = probe_config.ssl_config.ca_certs
+        keyfile = probe_config.ssl_config.keyfile
+        certfile = probe_config.ssl_config.certfile
+
+        ssl_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                os.path.pardir))
+        ca_certs_path = '{ssl_path}/ssl/{ca_certs}'.format(ca_certs=ca_certs,
+                                                           ssl_path=ssl_path)
+        keyfile_path = '{ssl_path}/ssl/{keyfile}'.format(keyfile=keyfile,
+                                                         ssl_path=ssl_path)
+        certfile_path = '{ssl_path}/ssl/{certfile}'.format(certfile=certfile,
+                                                           ssl_path=ssl_path)
+        app.conf.update(
+            BROKER_USE_SSL={
+               'ca_certs': ca_certs_path,
+               'keyfile': keyfile_path,
+               'certfile': certfile_path,
+               'cert_reqs': ssl.CERT_REQUIRED
+            }
+        )
     return
 
 
@@ -145,3 +180,29 @@ def setup_log(**args):
     hl.setFormatter(formatter)
     # add new handler to logger
     args['logger'].addHandler(hl)
+
+
+def debug_enabled():
+    return probe_config.log.debug
+
+
+def setup_debug_logger(logger):
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+    FORMAT = "%(asctime)-15s %(name)s %(process)d %(filename)s:"
+    FORMAT += "%(lineno)d (%(funcName)s) %(message)s"
+    logging.basicConfig(format=FORMAT)
+    logger.setLevel(logging.DEBUG)
+    return
+
+
+# =============
+#  FTP helpers
+# =============
+
+def get_ftp_class():
+    protocol = probe_config.ftp.protocol
+    if protocol == "sftp":
+        return IrmaSFTP
+    elif protocol == "ftps":
+        return IrmaFTPS

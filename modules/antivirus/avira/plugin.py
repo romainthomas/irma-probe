@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ class AviraPlugin(PluginBase, Avira, AntivirusPluginInterface):
     # =================
 
     _plugin_name_ = "Avira"
+    _plugin_display_name_ = Avira._name
     _plugin_author_ = "y0ug"
     _plugin_version_ = "0.0.1"
     _plugin_category_ = "antivirus"

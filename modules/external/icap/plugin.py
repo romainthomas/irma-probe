@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2014 QuarksLab.
+# Copyright (c) 2013-2016 QuarksLab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ class ICAPPlugin(PluginBase):
     # =================
 
     _plugin_name_ = "ICAP"
+    _plugin_display_name_ = "ICAP"
     _plugin_author_ = "Vincent Rasneur <vrasneur@free.fr>"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.external
@@ -70,10 +71,6 @@ class ICAPPlugin(PluginBase):
                                                  ('url', str),
                                                  ('timeout', int)))
         self.module = sys.modules['icapclient']
-
-    def can_handle(self, mimetype):
-        # accept all mimetypes
-        return True
 
     @staticmethod
     def retrieve_options(config, kwargs, keys):
@@ -135,7 +132,7 @@ class ICAPPlugin(PluginBase):
     # ==================
 
     def run(self, paths):
-        results = PluginResult(name=type(self).plugin_name,
+        results = PluginResult(name=type(self).plugin_display_name,
                                type=type(self).plugin_category,
                                version=None)
         try:

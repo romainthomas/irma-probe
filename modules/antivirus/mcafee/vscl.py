@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ log = logging.getLogger(__name__)
 
 
 class McAfeeVSCL(Antivirus):
+    _name = "McAfee VirusScan Command Line scanner"
 
     # ==================================
     #  Constructor and destructor stuff
@@ -31,8 +32,6 @@ class McAfeeVSCL(Antivirus):
     def __init__(self, *args, **kwargs):
         # class super class constructor
         super(McAfeeVSCL, self).__init__(*args, **kwargs)
-        # set default antivirus information
-        self._name = "McAfee VirusScan Command Line scanner"
         # scan tool variables
         if self._is_windows:
             self._scan_args = (

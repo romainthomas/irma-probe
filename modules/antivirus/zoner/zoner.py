@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 
 class Zoner(Antivirus):
+    _name = "Zoner Antivirus for Linux Desktop"
 
     # ==================================
     #  Constructor and destructor stuff
@@ -33,8 +34,6 @@ class Zoner(Antivirus):
     def __init__(self, *args, **kwargs):
         # class super class constructor
         super(Zoner, self).__init__(*args, **kwargs)
-        # set default antivirus information
-        self._name = "Zoner Antivirus for Linux Desktop"
         # scan tool variables
         self._scan_args = (
             "--scan-full "

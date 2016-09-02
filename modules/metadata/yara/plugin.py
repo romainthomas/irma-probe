@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 
 import os
 import sys
-import hashlib
 
 from ConfigParser import SafeConfigParser
 from datetime import datetime
@@ -39,6 +38,7 @@ class YaraPlugin(PluginBase):
     # =================
 
     _plugin_name_ = "Yara"
+    _plugin_display_name_ = "Yara"
     _plugin_author_ = "Bryan Nolen @BryanNolen"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.metadata
@@ -70,10 +70,6 @@ class YaraPlugin(PluginBase):
 
         self.rules = sys.modules['yara'].compile(filepath=self.rule_path)
 
-    def can_handle(self, mimetype):
-        # accept all mimetypes
-        return True
-
     def get_file_report(self, filename):
         try:
             results = (False, self.rules.match(filename, timeout=60))
@@ -87,7 +83,7 @@ class YaraPlugin(PluginBase):
     # ==================
 
     def run(self, paths):
-        results = PluginResult(name=type(self).plugin_name,
+        results = PluginResult(name=type(self).plugin_display_name,
                                type=type(self).plugin_category,
                                version=None)
         try:

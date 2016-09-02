@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ class SkeletonPlugin(PluginBase):
     #  plugin metadata
     # =================
     _plugin_name_ = "Skeleton"
+    _plugin_display_name = "Skeleton Display Name"
     _plugin_author_ = "<author name>"
     _plugin_version_ = "<version>"
     _plugin_category_ = "custom"
@@ -47,11 +48,6 @@ class SkeletonPlugin(PluginBase):
     def __init__(self):
         pass
 
-    def can_handle(self, mimetype):
-        # filter files on mimetype
-        # return True if supported
-        return True
-
     @classmethod
     def verify(cls):
         raise PluginLoadError("Skeleton plugin is not meant to be loaded")
@@ -60,7 +56,7 @@ class SkeletonPlugin(PluginBase):
     #  probe interfaces
     # ==================
     def run(self, paths):
-        response = PluginResult(name=type(self).plugin_name,
+        response = PluginResult(name=type(self).plugin_display_name,
                                 type=type(self).plugin_category,
                                 version=None)
         try:

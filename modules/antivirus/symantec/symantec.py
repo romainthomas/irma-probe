@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class Symantec(Antivirus):
+    _name = "Symantec Anti-Virus"
 
     # ==================================
     #  Constructor and destructor stuff
@@ -34,8 +35,6 @@ class Symantec(Antivirus):
     def __init__(self, *args, **kwargs):
         # class super class constructor
         super(Symantec, self).__init__(*args, **kwargs)
-        # set default antivirus information
-        self._name = "Symantec Anti-Virus"
         # scan tool variables
         self._scan_args = (
             "/ScanFile "  # scan command

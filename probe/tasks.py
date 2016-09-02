@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,22 +20,36 @@ import os
 import sys
 import uuid
 import config.parser as config
+import celery
+import logging
 
 from celery import Celery, current_task
 from celery.utils.log import get_task_logger
 from celery.exceptions import TimeoutError
 
-from lib.irma.ftp.handler import FtpTls
 from lib.plugins import PluginManager
 from lib.common.utils import to_unicode
 
 from probe.controllers.braintasks import register_probe
+import probe.controllers.ftpctrl as ftp_ctrl
 
 ##############################################################################
 # celery application configuration
 ##############################################################################
 
 log = get_task_logger(__name__)
+
+# IRMA specific debug messages are enables through
+# config file Section: log / Key: debug
+if config.debug_enabled():
+    def after_setup_logger_handler(sender=None, logger=None, loglevel=None,
+                                   logfile=None, format=None,
+                                   colorize=None, **kwds):
+        config.setup_debug_logger(logging.getLogger(__name__))
+        log.debug("debug is enabled")
+    celery.signals.after_setup_logger.connect(after_setup_logger_handler)
+    celery.signals.after_setup_task_logger.connect(after_setup_logger_handler)
+
 
 # disable insecure serializer (disabled by default from 3.x.x)
 if (kombu.VERSION.major) < 3:
@@ -78,15 +92,15 @@ probe_app.conf.update(
 
 for p in probes:
     # register probe on Brain
-    probe_name = p.plugin_name
-    probe_category = p.plugin_category
-    mimetype_regexp = p.plugin_mimetype_regexp
-    log.info('Register probe %s' % probe_name)
+    log.info('Register probe %s' % p.plugin_name)
     try_nb = 1
     while True:
         try:
             try_nb += 1
-            task = register_probe(probe_name, probe_category, mimetype_regexp)
+            task = register_probe(p.plugin_name,
+                                  p.plugin_display_name,
+                                  p.plugin_category,
+                                  p.plugin_mimetype_regexp)
             task.get(timeout=10)
             break
         except TimeoutError:
@@ -101,29 +115,17 @@ probes = dict((probe.plugin_name, probe()) for probe in probes)
 # declare celery tasks
 ##############################################################################
 
-def handle_output_files(results, dstpath):
+def handle_output_files(results, frontend, scanid):
     # First check if there is some output files
     output_files = results.pop('output_files', None)
     if output_files is None:
         return
     tmpdir = output_files.get('output_dir', None)
     file_list = output_files.get('file_list', None)
-    log.debug("handle_output_files with %s", ",".join(file_list))
     if tmpdir is None or file_list is None:
         return
-    conf_ftp = config.probe_config.ftp_brain
-    uploaded_files = {}
-    with FtpTls(conf_ftp.host,
-                conf_ftp.port,
-                conf_ftp.username,
-                conf_ftp.password) as ftps:
-        for path in file_list:
-            if os.path.isdir(path):
-                continue
-            log.debug("handle_output_files uploading %s", path)
-            full_path = os.path.join(tmpdir, path)
-            hashname = ftps.upload_file(dstpath, full_path)
-            uploaded_files[path] = hashname
+    uploaded_files = ftp_ctrl.upload_files(frontend, tmpdir, file_list, scanid)
+    log.debug("handle_output_files: uploaded %s", ",".join(file_list))
     results['uploaded_files'] = uploaded_files
     shutil.rmtree(tmpdir)
     return
@@ -134,35 +136,38 @@ def register():
     routing_key = current_task.request.delivery_info['routing_key']
     probe = probes[routing_key]
     probe_name = type(probe).plugin_name
+    probe_display_name = type(probe).plugin_display_name
     probe_category = type(probe).plugin_category
     probe_regexp = type(probe).plugin_mimetype_regexp
-    register_probe(probe_name, probe_category, probe_regexp)
+    log.debug("queue %s probe %s category %s probe_regexp %s",
+              probe_name, probe_display_name, probe_category, probe_regexp)
+    register_probe(probe_name, probe_display_name,
+                   probe_category, probe_regexp)
 
 
 @probe_app.task(acks_late=True)
 def probe_scan(frontend, scanid, filename):
     try:
+        tmpname = None
         # retrieve queue name and the associated plugin
         routing_key = current_task.request.delivery_info['routing_key']
         probe = probes[routing_key]
-        conf_ftp = config.probe_config.ftp_brain
+        log.debug("scanid %s: filename %s probe %s", scanid, filename, probe)
         (fd, tmpname) = tempfile.mkstemp()
         os.close(fd)
-        with FtpTls(conf_ftp.host,
-                    conf_ftp.port,
-                    conf_ftp.username,
-                    conf_ftp.password) as ftps:
-            path = "{0}/{1}".format(frontend, scanid)
-            ftps.download(path, filename, tmpname)
+        ftp_ctrl.download_file(frontend, scanid, filename, tmpname)
         results = probe.run(tmpname)
-        # Some AV always delete suspicious file
-        if os.path.exists(tmpname):
-            os.remove(tmpname)
-        handle_output_files(results, path)
+        handle_output_files(results, frontend, scanid)
         return to_unicode(results)
     except Exception as e:
-        log.exception("Exception has occured: {0}".format(e))
+        log.exception(e)
         raise probe_scan.retry(countdown=2, max_retries=3, exc=e)
+    finally:
+        # Some AV always delete suspicious file
+        if tmpname is not None and os.path.exists(tmpname):
+            log.debug("scanid %s: filename %s probe %s removing tmp_name %s",
+                      scanid, filename, probe, tmpname)
+            os.remove(tmpname)
 
 ##############################################################################
 # command line launcher, only for debug purposes

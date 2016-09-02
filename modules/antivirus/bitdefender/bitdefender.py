@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 
 class BitdefenderForUnices(Antivirus):
+    _name = "Bitdefender Antivirus Scanner for Unices"
 
     # ==================================
     #  Constructor and destructor stuff
@@ -33,8 +34,6 @@ class BitdefenderForUnices(Antivirus):
     def __init__(self, *args, **kwargs):
         # class super class constructor
         super(BitdefenderForUnices, self).__init__(*args, **kwargs)
-        # set default antivirus information
-        self._name = "Bitdefender Antivirus Scanner for Unices"
         # create a temporary filename
         (fd, self._log_path) = tempfile.mkstemp()
         os.close(fd)

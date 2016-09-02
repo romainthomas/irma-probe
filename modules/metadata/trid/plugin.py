@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,8 @@
 # modified, propagated, or distributed except according to the
 # terms contained in the LICENSE file.
 
-import re
 import os
 import sys
-import logging
 
 from datetime import datetime
 from lib.common.utils import timestamp
@@ -34,6 +32,7 @@ class TrIDPlugin(PluginBase):
         SUCCESS = 1
 
     _plugin_name_ = "TrID"
+    _plugin_display_name_ = "TrID File Identifier"
     _plugin_author_ = "IRMA (c) Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = "metadata"
@@ -54,12 +53,8 @@ class TrIDPlugin(PluginBase):
         module = sys.modules['modules.metadata.trid.trid'].TrID
         self.module = module()
 
-    def can_handle(self, mimetype):
-        # accept all mimetypes
-        return True
-
     def run(self, paths):
-        results = PluginResult(name=type(self).plugin_name,
+        results = PluginResult(name=type(self).plugin_display_name,
                                type=type(self).plugin_category,
                                version=None)
         # launch file analysis

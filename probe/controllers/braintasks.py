@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,8 +26,8 @@ config.configure_syslog(brain_app)
 #  Task calls
 # ============
 
-def register_probe(name, category, mimetype_regexp):
+def register_probe(name, display_name, category, mimetype_regexp):
     """ send a task to the brain to register local probes"""
-    task = async_call(brain_app, "brain.tasks", "register_probe",
-                      args=[name, category, mimetype_regexp])
+    task = async_call(brain_app, "brain.scan_tasks", "register_probe",
+                      args=[name, display_name, category, mimetype_regexp])
     return task

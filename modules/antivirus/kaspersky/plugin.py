@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ class KasperskyPlugin(PluginBase, Kaspersky, AntivirusPluginInterface):
     # =================
 
     _plugin_name_ = "Kaspersky"
+    _plugin_display_name_ = Kaspersky._name
     _plugin_author_ = "IRMA (c) Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.antivirus

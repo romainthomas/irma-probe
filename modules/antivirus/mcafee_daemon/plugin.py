@@ -14,41 +14,43 @@
 # terms contained in the LICENSE file.
 
 import os
+from ConfigParser import SafeConfigParser
 
-from .asquared import ASquaredCmd
+from .vscldaemon import McAfeeDaemon
 from ..interface import AntivirusPluginInterface
 
 from lib.plugins import PluginBase, PluginLoadError
-from lib.plugins import PlatformDependency
 from lib.irma.common.utils import IrmaProbeType
+from lib.plugins import BinaryDependency, PlatformDependency, FileDependency
 
 
-class ASquaredCmdPlugin(PluginBase, ASquaredCmd, AntivirusPluginInterface):
-
+class McAfeeDaemonPlugin(PluginBase, McAfeeDaemon, AntivirusPluginInterface):
     # =================
     #  plugin metadata
     # =================
 
-    _plugin_name_ = "ASquaredCmd"
-    _plugin_display_name_ = ASquaredCmd._name
+    _plugin_name_ = "McAfee-Daemon"
+    _plugin_display_name_ = McAfeeDaemon._name
     _plugin_author_ = "IRMA (c) Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.antivirus
-    _plugin_description_ = "Plugin for ASquaredCmd on Windows"
+    _plugin_description_ = "Plugin for McAfee (VSCL) daemon version"
     _plugin_dependencies_ = [
-        PlatformDependency('win32')
-    ]
+        PlatformDependency('linux'),
+        BinaryDependency('mcafee-daemon'),
+        FileDependency(McAfeeDaemon._daemon_config)
+        ]
 
     @classmethod
     def verify(cls):
         # create an instance
-        module = ASquaredCmd()
+        module = McAfeeDaemon()
         path = module.scan_path
         del module
         # perform checks
         if not path or not os.path.exists(path):
             raise PluginLoadError("{0}: verify() failed because "
-                                  "ASquaredCmd executable was not found."
+                                  "McAfeeVSCL executable was not found."
                                   "".format(cls.__name__))
 
     # =============
@@ -57,4 +59,7 @@ class ASquaredCmdPlugin(PluginBase, ASquaredCmd, AntivirusPluginInterface):
 
     def __init__(self):
         # load default configuration file
-        self.module = ASquaredCmd()
+        config = SafeConfigParser()
+        config.read(McAfeeDaemon._daemon_config)
+        path = config.get('server', 'socket_path')
+        self.module = McAfeeDaemon(socket_path=path)

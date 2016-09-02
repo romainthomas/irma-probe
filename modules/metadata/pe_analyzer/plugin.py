@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ class PEAnalyzerPlugin(PluginBase):
     # =================
 
     _plugin_name_ = "StaticAnalyzer"
+    _plugin_display_name_ = "PE Static Analyzer"
     _plugin_author_ = "IRMA (c) Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.metadata
@@ -68,9 +69,6 @@ class PEAnalyzerPlugin(PluginBase):
         module = sys.modules['modules.metadata.pe_analyzer.pe'].PE
         self.module = module()
 
-    def can_handle(self, mimetype):
-        return re.search('PE32', mimetype, re.IGNORECASE) is not None
-
     def analyze(self, filename):
         # check parameters
         if not filename:
@@ -92,7 +90,7 @@ class PEAnalyzerPlugin(PluginBase):
         return result
 
     def run(self, paths):
-        results = PluginResult(name=type(self).plugin_name,
+        results = PluginResult(name=type(self).plugin_display_name,
                                type=type(self).plugin_category,
                                version=None)
         # launch file analysis
@@ -109,6 +107,6 @@ class PEAnalyzerPlugin(PluginBase):
                 results.status = self.StaticAnalyzerResults.SUCCESS
                 results.results = response
         except Exception as e:
-            results.status = self.StaticAnalyzerResult.ERROR
+            results.status = self.StaticAnalyzerResults.ERROR
             results.error = str(e)
         return results

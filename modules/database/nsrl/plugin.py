@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2015 QuarksLab.
+# Copyright (c) 2013-2016 Quarkslab.
 # This file is part of IRMA project.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ class NSRLPlugin(PluginBase):
     # =================
 
     _plugin_name_ = "NSRL"
+    _plugin_display_name = "National Software Reference Library"
     _plugin_author_ = "IRMA (c) Quarkslab"
     _plugin_version_ = "1.0.0"
     _plugin_category_ = IrmaProbeType.database
@@ -110,16 +111,12 @@ class NSRLPlugin(PluginBase):
         self.module = module(nsrl_file_db, nsrl_prod_db,
                              nsrl_os_db, nsrl_mfg_db)
 
-    def can_handle(self, mimetype):
-        # accept all PE executable
-        return re.search('PE32', mimetype, re.IGNORECASE) is not None
-
     # ==================
     #  probe interfaces
     # ==================
 
     def run(self, paths):
-        results = PluginResult(name="National Software Reference Library",
+        results = PluginResult(name=type(self).display_name,
                                type=type(self).plugin_category,
                                version=None)
         try:
